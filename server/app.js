@@ -131,14 +131,11 @@ app.post('/login',
 app.get('/logout',
 (req, res, next) => {
   console.log('YOUVE LOGGED OUT!!!!! :(');
-  // res.clearCookie('sessionID');
-  // models.Sessions.delete({hash: req.cookie.sessionID});
-  // res.redirect('login');
+  res.clearCookie('sessionID');
+  models.Sessions.delete({hash: req.cookie.sessionID});
+  res.redirect('login');
 });
-// when they click logout
-// clear cookie, sessionID response
-// clear database session row 
-// send back to login
+
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
