@@ -96,10 +96,15 @@ app.get('/signup',
 
 app.post('/signup', 
 (req, res, next) => { 
-  models.Users.create(req.body);
-  res.redirect('/login');
-
-  
+  models.Users.get({ username: req.body.username })
+    .then((usersRowMatch) => {
+      if (usersRowMatch) {
+        res.redirect('/signup');
+      } else {
+        models.Users.create(req.body);
+        res.redirect('/');
+      }
+    });
 });
 
 app.post('/login', 
@@ -107,9 +112,9 @@ app.post('/login',
   var {username, password} = req.body;
   
   models.Users.get({ username: username })
-    .then((objresult) => {
-      if (objresult) {
-        var check = models.Users.compare(password, objresult.password, objresult.salt);
+    .then((usersRowMatch) => {
+      if (usersRowMatch) {
+        var check = models.Users.compare(password, usersRowMatch.password, usersRowMatch.salt);
         if (!check) {
           console.log('password wrong');
           res.redirect('/login');
@@ -117,7 +122,7 @@ app.post('/login',
         } else {
           // update database userId q hash
           console.log('password right, assigning id');
-          models.Sessions.update({ hash: req.cookie.sessionID }, [{userId: objresult.id}]);
+          models.Sessions.update({ hash: req.cookie.sessionID }, [{userId: usersRowMatch.id}]);
           res.redirect('/');
         }
       } else {
