@@ -7,20 +7,22 @@ const parseCookies = (req, res, next) => {
   
   var cookieObj = {};
   if (!req.headers.cookie) { 
-    req.headers.cookie = ''; 
+    req.cookie = cookieObj; 
+    next();
+  } else {
+    var cookiesArr = req.headers.cookie.split(';');
+    cookiesArr.forEach((el)=>{
+      var keyVal = el.split('=');
+      var key = keyVal[0].trim();
+      var val = keyVal[1].trim();
+      cookieObj[key] = val;
+    });
+    
+    req.cookie = cookieObj;
+    //console.log(cookieObj);
     next();
   }
-  var cookiesArr = req.headers.cookie.split(';');
-  cookiesArr.forEach((el)=>{
-    var keyVal = el.split('=');
-    var key = keyVal[0].trim();
-    var val = keyVal[1].trim();
-    cookieObj[key] = val;
-  });
   
-  req.cookie = cookieObj;
-  //console.log(cookieObj);
-  next();
 };
 
 module.exports = parseCookies;

@@ -29,12 +29,17 @@ module.exports.createSession = (req, res, next) => {
 // Add additional authentication middleware functions below
 /************************************************************/
 
-module.exports.checkUserLogin = (req, res, next) => {
+module.exports.verifySession = (req, res, next) => {
   // don't create session id, redirect them to login
   models.Sessions.get({ hash: req.cookie.sessionID})
     .then((session) => {
-      if (session.user) {
-        res.redirect('/');
+      if (session && session.user) {
+        if (req.url === '/login') {
+          res.redirect('/');
+        } else {
+          next();
+        }
+        
       } else {
         res.redirect('/login');
       }

@@ -21,18 +21,18 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', Auth.checkUserLogin,
+app.get('/', Auth.verifySession,
 (req, res) => {
   //console.log('>>>>>', req.cookie);
   res.render('index');
 });
 
-app.get('/create', Auth.checkUserLogin,
+app.get('/create', Auth.verifySession,
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links', Auth.checkUserLogin,
+app.get('/links', Auth.verifySession,
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -82,7 +82,7 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login', 
+app.get('/login', Auth.verifySession,
 (req, res, next) => {
   res.render('login');
   
@@ -117,7 +117,7 @@ app.post('/login',
         } else {
           // update database userId q hash
           console.log('password right, assigning id');
-          models.Sessions.update(['userId='+objresult.id], { hash: req.cookie.sessionID });
+          models.Sessions.update({ hash: req.cookie.sessionID }, [{userId: objresult.id}]);
           res.redirect('/');
         }
       } else {
@@ -128,6 +128,17 @@ app.post('/login',
   // models.Sessions.create();  
 });
 
+app.get('/logout',
+(req, res, next) => {
+  console.log('YOUVE LOGGED OUT!!!!! :(');
+  // res.clearCookie('sessionID');
+  // models.Sessions.delete({hash: req.cookie.sessionID});
+  // res.redirect('login');
+});
+// when they click logout
+// clear cookie, sessionID response
+// clear database session row 
+// send back to login
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
