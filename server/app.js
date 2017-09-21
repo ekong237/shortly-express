@@ -5,29 +5,34 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
-
+const parseCookies = require('./middleware/cookieParser');
 const app = express();
+
+
 
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'ejs');
 app.use(partials());
 app.use(bodyParser.json());
+app.use(parseCookies);
+app.use(Auth.createSession);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', 
+app.get('/', Auth.checkUserLogin,
+(req, res) => {
+  //console.log('>>>>>', req.cookie);
+  res.render('index');
+});
+
+app.get('/create', Auth.checkUserLogin,
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
-(req, res) => {
-  res.render('index');
-});
-
-app.get('/links', 
+app.get('/links', Auth.checkUserLogin,
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -77,7 +82,51 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/login', 
+(req, res, next) => {
+  res.render('login');
+  
+});
 
+
+app.get('/signup', 
+(req, res, next) => {
+  res.render('signup');
+});
+
+app.post('/signup', 
+(req, res, next) => { 
+  models.Users.create(req.body);
+  res.redirect('/login');
+
+  
+});
+
+app.post('/login', 
+(req, res, next) => {
+  var {username, password} = req.body;
+  
+  models.Users.get({ username: username })
+    .then((objresult) => {
+      if (objresult) {
+        var check = models.Users.compare(password, objresult.password, objresult.salt);
+        if (!check) {
+          console.log('password wrong');
+          res.redirect('/login');
+          
+        } else {
+          // update database userId q hash
+          console.log('password right, assigning id');
+          models.Sessions.update(['userId='+objresult.id], { hash: req.cookie.sessionID });
+          res.redirect('/');
+        }
+      } else {
+        res.redirect('/login');
+      }
+    });
+    
+  // models.Sessions.create();  
+});
 
 
 /************************************************************/
